@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cluster Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+<h1>Кластеризация точек</h1>
+<form id="paramsForm">
+    <label>Область (bbox):</label>
+    <input type="text" name="bbox" required>
+    <label>Зум:</label>
+    <input type="number" name="zoom" required>
+    <button type="submit">Показать кластеры</button>
+</form>
+<div id="map" style="height: 500px;"></div>
+
+<script>
+    const map = L.map('map').setView([55.751244, 37.618423], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Создаем слой для маркеров
+    const markersLayer = L.layerGroup().addTo(map);
+
+    document.getElementById('paramsForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+        const params = Object.fromEntries(formData.entries());
+
+        // Преобразуем zoom в число
+        params.zoom = parseInt(params.zoom, 10);
+
+        try {
+            const response = await fetch('/clusters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Ошибка:', errorText);
+                alert(`Ошибка: ${errorText}`);
+                return;
+            }
+
+            const result = await response.json();
+            console.log('Ответ от сервера:', result);
+
+            // Проверяем, содержит ли ответ массив точек
+            const clusters = Array.isArray(result) ? result : result.data;
+
+            if (!Array.isArray(clusters)) {
+                console.error('Неверный формат данных:', result);
+                alert('Сервер вернул некорректные данные.');
+                return;
+            }
+
+            // Очищаем слой маркеров перед добавлением новых
+            markersLayer.clearLayers();
+
+            // Добавляем новые маркеры на слой
+            clusters.forEach((cluster) => {
+                const coordinates = cluster.geometry?.coordinates;
+                if (Array.isArray(coordinates) && coordinates.length === 2) {
+                    const [lat, lon] = coordinates;
+                    L.marker([lat, lon]).addTo(markersLayer);
+                } else {
+                    console.warn('Пропущен кластер с некорректными координатами:', cluster);
+                }
+            });
+        } catch (error) {
+            console.error('Ошибка при выполнении запроса:', error);
+            alert('Произошла ошибка при выполнении запроса. Проверьте консоль.');
+        }
+    });
+</script>
+</body>
+</html>
