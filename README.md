@@ -1,14 +1,23 @@
-# cluster
+# Cluster
 
-Как запустить без ккопиляции
-Установите зависимости:
+## Как запустить без компиляции
 
-go mod init cluster-map
-go get github.com/gin-gonic/gin
+1. Установите зависимости:
+    ```bash
+    go mod init cluster-map
+    go get github.com/gin-gonic/gin
+    ```
 
-go run main.go
+2. Запустите проект:
+    ```bash
+    go run main.go
+    ```
 
-Как запустить скомпилированый бинарник
-./cluster-map
+## Как запустить скомпилированный бинарник
 
-Откройте браузер и перейдите на http://localhost:8083
+1. Скомпилированный бинарник можно запустить командой:
+    ```bash
+    ./cluster-map
+    ```
+
+2. Откройте браузер и перейдите по адресу: [http://localhost:8083](
